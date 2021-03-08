@@ -8,6 +8,21 @@ mp_hands = mp.solutions.hands
 file_list = ["source/input/imgs/hand_sample.jpg"]
 
 
+def _coords_to_json(hand_landmarks, num_landmarks=21):
+    coords_dict = {i: {"x": 0.0, "y": 0.0, "z": 0.0} for i in range(num_landmarks)}
+    assert num_landmarks == len(hand_landmarks.landmark), "The number of landmark is not matched"
+
+    for idx in range(num_landmarks):
+        coords_dict[idx]["x"] = hand_landmarks.landmark[idx].x
+        coords_dict[idx]["y"] = hand_landmarks.landmark[idx].y
+        coords_dict[idx]["z"] = hand_landmarks.landmark[idx].z
+
+    # print(dir(hand_landmarks))
+    # print(hand_landmarks.landmark)
+    # print(len(hand_landmarks.landmark))
+    # print(hand_landmarks.landmark[0])
+
+
 def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5):
 
     with mp_hands.Hands(
@@ -29,6 +44,7 @@ def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detect
             image_height, image_width, _ = image.shape
             annotated_image = image.copy()
             for hand_landmarks in results.multi_hand_landmarks:
+                _coords_to_json(hand_landmarks)
                 print("hand_landmarks:", hand_landmarks)
                 print(
                     f"Index finger tip coordinates: (",
@@ -39,7 +55,7 @@ def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detect
                     annotated_image, hand_landmarks, mp_hands.HAND_CONNECTIONS
                 )
 
-            os.makedirs("source/output/imgs/")
+            os.makedirs("source/output/imgs/", exist_ok=True)
             cv2.imwrite("source/output/imgs/" + str(idx) + ".png", cv2.flip(annotated_image, 1))
 
 
