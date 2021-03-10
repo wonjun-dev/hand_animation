@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import os
+import json
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
@@ -16,6 +17,10 @@ def _coords_to_json(hand_landmarks, num_landmarks=21):
         coords_dict[idx]["x"] = hand_landmarks.landmark[idx].x
         coords_dict[idx]["y"] = hand_landmarks.landmark[idx].y
         coords_dict[idx]["z"] = hand_landmarks.landmark[idx].z
+
+    os.makedirs("source/output/json", exist_ok=True)
+    with open("source/output/json/coords.json", "w") as f:
+        json.dump(coords_dict, f)
 
     # print(dir(hand_landmarks))
     # print(hand_landmarks.landmark)
