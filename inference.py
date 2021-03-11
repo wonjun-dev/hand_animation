@@ -6,10 +6,14 @@ import json
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
-file_list = ["source/input/imgs/hand_sample.jpg"]
+file_list = [
+    "source/input/imgs/rock.jpg",
+    "source/input/imgs/scissor.jpg",
+    "source/input/imgs/paper.jpg",
+]
 
 
-def _coords_to_json(hand_landmarks, num_landmarks=21):
+def _coords_to_json(hand_landmarks, name, num_landmarks=21):
     coords_dict = {i: {"x": 0.0, "y": 0.0, "z": 0.0} for i in range(num_landmarks)}
     assert num_landmarks == len(hand_landmarks.landmark), "The number of landmark is not matched"
 
@@ -19,7 +23,7 @@ def _coords_to_json(hand_landmarks, num_landmarks=21):
         coords_dict[idx]["z"] = hand_landmarks.landmark[idx].z
 
     os.makedirs("source/output/json", exist_ok=True)
-    with open("source/output/json/coords.json", "w") as f:
+    with open(f"source/output/json/{name}.json", "w") as f:
         json.dump(coords_dict, f)
 
     # print(dir(hand_landmarks))
@@ -49,7 +53,7 @@ def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detect
             image_height, image_width, _ = image.shape
             annotated_image = image.copy()
             for hand_landmarks in results.multi_hand_landmarks:
-                _coords_to_json(hand_landmarks)
+                _coords_to_json(hand_landmarks, name=str(idx))
                 print("hand_landmarks:", hand_landmarks)
                 print(
                     f"Index finger tip coordinates: (",

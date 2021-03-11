@@ -10,7 +10,7 @@ import numpy as np
 os.chdir("/home/wonjun/Blender/blender-2.91.2-linux64/projects/hand_animation")
 
 json_path = "source/output/json"
-json_name = "coords.json"
+json_name = "2.json"
 
 
 BONE_CONNECTION = [
@@ -56,14 +56,37 @@ def vectorize(coords):
 
     from mathutils import Vector
 
-    for idx, coord in coords.items():
-        print(idx, coord)
+    pose = []
+    for key, coord in coords.items():
+        pose.append([coord["x"], coord["y"], coord["z"]])
+
+    return pose
+
+
+def visualize(pose):
+    amt = bpy.data.armatures.new("HandJointArmature")
+    rig = bpy.data.objects.new("HandJointRig", amt)
+
+    bpy.context.collection.objects.link(rig)
+    bpy.context.view_layer.objects.active = rig
+
+    bpy.ops.object.mode_set(mode="EDIT")
+
+    for conn in BONE_CONNECTION:
+        head_idx, tail_idx = conn[0], conn[1]
+        bone = amt.edit_bones.new(f"{head_idx}_{tail_idx}")
+        head_coord, tail_coord = pose[head_idx], pose[tail_idx]
+        bone.head = head_coord
+        bone.tail = tail_coord
+
+    bpy.ops.object.mode_set(mode="OBJECT")
 
 
 def main():
     path = os.path.join(json_path, json_name)
     coords = read_json(path)
-    vectorize(coords)
+    pose = vectorize(coords)
+    visualize(pose)
 
 
 if __name__ == "__main__":
