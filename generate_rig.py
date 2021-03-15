@@ -34,6 +34,7 @@ BONE_CONNECTION = [
     [17, 18],
     [18, 19],
     [19, 20],
+    [21, 0],
 ]
 
 
@@ -59,6 +60,12 @@ def vectorize(coords):
     pose = []
     for key, coord in coords.items():
         pose.append([coord["x"], coord["y"], coord["z"]])
+
+    # make lower arm bone
+    lower_arm_x = pose[0][0] - 0.1
+    lower_arm_y = pose[0][1] + 0.4
+    lower_arm_z = pose[0][2]
+    pose.append([lower_arm_x, lower_arm_y, lower_arm_z])
 
     return pose
 
