@@ -13,7 +13,7 @@ file_list = [
 ]
 
 
-def _coords_to_json(hand_landmarks, name, num_landmarks=21):
+def _coords_to_dict(hand_landmarks, num_landmarks=21):
     coords_dict = {i: {"x": 0.0, "y": 0.0, "z": 0.0} for i in range(num_landmarks)}
     assert num_landmarks == len(hand_landmarks.landmark), "The number of landmark is not matched"
 
@@ -21,7 +21,10 @@ def _coords_to_json(hand_landmarks, name, num_landmarks=21):
         coords_dict[idx]["x"] = hand_landmarks.landmark[idx].x
         coords_dict[idx]["y"] = hand_landmarks.landmark[idx].y
         coords_dict[idx]["z"] = hand_landmarks.landmark[idx].z
+    return coords_dict
 
+
+def _save_json(coords_dict, name):
     os.makedirs("source/output/json", exist_ok=True)
     with open(f"source/output/json/{name}.json", "w") as f:
         json.dump(coords_dict, f)
@@ -53,7 +56,8 @@ def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detect
             image_height, image_width, _ = image.shape
             annotated_image = image.copy()
             for hand_landmarks in results.multi_hand_landmarks:
-                _coords_to_json(hand_landmarks, name=str(idx))
+                coords_dict = _coords_to_dict(hand_landmarks)
+                _save_json(coords_dict, name=str(idx))
                 print("hand_landmarks:", hand_landmarks)
                 print(
                     f"Index finger tip coordinates: (",
@@ -69,36 +73,54 @@ def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detect
 
 
 def video_inference():
-    # # For webcam input:
-    # cap = cv2.VideoCapture(0)
-    # with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
-    #     while cap.isOpened():
-    #         success, image = cap.read()
-    #         if not success:
-    #             print("Ignoring empty camera frame.")
-    #             # If loading a video, use 'break' instead of 'continue'.
-    #             continue
-
-    #         # Flip the image horizontally for a later selfie-view display, and convert
-    #         # the BGR image to RGB.
-    #         image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-    #         # To improve performance, optionally mark the image as not writeable to
-    #         # pass by reference.
-    #         image.flags.writeable = False
-    #         results = hands.process(image)
-
-    #         # Draw the hand annotations on the image.
-    #         image.flags.writeable = True
-    #         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    #         if results.multi_hand_landmarks:
-    #             for hand_landmarks in results.multi_hand_landmarks:
-    #                 mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-    #         cv2.imshow("MediaPipe Hands", image)
-    #         if cv2.waitKey(5) & 0xFF == 27:
-    #             break
-    # cap.release()
+    # For video input
     pass
 
 
+def webcam_inference(output_name="video.avi"):
+    # For webcam input:
+    cap = cv2.VideoCapture(0)
+
+    os.makedirs("source/output/video/", exist_ok=True)
+    fourcc = cv2.VideoWriter_fourcc(*"DIVX")
+    out = cv2.VideoWriter(f"source/output/video/{output_name}", fourcc, 30, (640, 480))
+
+    with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
+        frame = 1
+        frame_coords = {}
+        while cap.isOpened():
+            success, image = cap.read()
+            if not success:
+                print("Ignoring empty camera frame.")
+                # If loading a video, use 'break' instead of 'continue'.
+                continue
+            # Flip the image horizontally for a later selfie-view display, and convert
+            # the BGR image to RGB.
+            image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+            # To improve performance, optionally mark the image as not writeable to
+            # pass by reference.
+            image.flags.writeable = False
+            results = hands.process(image)
+
+            # Draw the hand annotations on the image.
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            if results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    frame_coords[frame] = _coords_to_dict(hand_landmarks)
+                    _save_json(frame_coords, name=output_name.split(".")[0])
+                    mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            cv2.imshow("MediaPipe Hands", image)
+            out.write(image)
+            if cv2.waitKey(5) & 0xFF == 27:
+                break
+            frame += 1
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
-    img_inference(file_list)
+    # img_inference(file_list)
+    webcam_inference()
