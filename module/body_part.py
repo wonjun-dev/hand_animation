@@ -28,24 +28,18 @@ class Hand:
             # [21, 0],
         ]
 
-        init_pose = init_pose
-        init_normal = calc_normal()
+        self.init_pose = init_pose
+        init_normal = 0
 
         self.prev_pose = init_pose
         self.prev_normal = init_normal
         self.cur_pose = 0
         self.cur_normal = 0
 
-        gen_palm_vectexes()
-        copy_rotation()
-
     def gen_palm_vectexes(self):
         pass
 
     def copy_rotation(self):
-        pass
-
-    def calc_normal(self):
         pass
 
     def move(self, pose):
