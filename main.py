@@ -30,6 +30,17 @@ def read_json(path):
 
 
 def initialzie(init_pose):
+    """
+    Initialzie Hand rig in .blend file.
+    (1. Generate rig. 2. Parenting rig. 3. Generate palm plane, 4. Copy roll constraint of palm plane and lower arm.)
+
+    Args:
+        init_pose: (dict) 3-dim 21 points of first frame.
+
+    Return:
+        hand_model: Hand instance
+    """
+
     hand_model = body_part.Hand(init_pose)
     bone_connection = hand_model.BONE_CONNECTION
 
@@ -52,11 +63,36 @@ def initialzie(init_pose):
 
     bpy.ops.object.mode_set(mode="OBJECT")
 
+    _parenting(amt)
+
     return hand_model
+    # amt.edit_bones["0_1"].parent = amt.edit_bones["0_5"]
+    # bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def _parenting():
-    pass
+def _parenting(amt):
+    """
+    Pareting all bones in hand.
+
+    Args:
+        relation: (list of tuple)
+    """
+    parent_relation = [
+        ("3_4", "2_3", "1_2", "0_1"),
+        ("7_8", "6_7", "5_6", "0_5"),
+        ("11_12", "10_11", "9_10", "0_9"),
+        ("15_16", "14_15", "13_14", "0_13"),
+        ("19_20", "18_19", "17_18", "0_17"),
+    ]
+
+    bpy.ops.object.mode_set(mode="EDIT")
+
+    for finger in parent_relation:
+        num_bone = len(finger)
+        for i in range(num_bone - 1):
+            amt.edit_bones[finger[i]].parent = amt.edit_bones[finger[i + 1]]
+
+    bpy.ops.object.mode_set(mode="OBJECT")
 
 
 def move_hand(coords):

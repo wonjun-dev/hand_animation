@@ -29,14 +29,14 @@ class Hand:
         ]
 
         self.init_pose = init_pose
-        init_normal = 0
+        self.init_normal = 0
 
         self.prev_pose = init_pose
-        self.prev_normal = init_normal
+        self.prev_normal = self.init_normal
         self.cur_pose = 0
         self.cur_normal = 0
 
-    def gen_palm_vectexes(self):
+    def gen_palm_vertexes(self):
         pass
 
     def copy_rotation(self):
