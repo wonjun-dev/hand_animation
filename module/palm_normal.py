@@ -3,6 +3,7 @@
 import os
 import json
 import numpy as np
+from mathutils import Vector
 
 os.chdir("/home/wonjun/Blender/blender-2.91.2-linux64/projects/hand_animation")
 
@@ -24,7 +25,7 @@ def normal_vector(coords, points=[0, 5, 13]):
         points: (dict) 3 points of 3-dim coordinates.
 
     Return:
-        nv: (list) 3-dim normal vector([A,B,C]) of a plane.
+        nv: (np.array) 3-dim normal vector([A,B,C]) of a plane.
     """
 
     p1, p2, p3 = coords[str(points[0])], coords[str(points[1])], coords[str(points[2])]
@@ -34,7 +35,9 @@ def normal_vector(coords, points=[0, 5, 13]):
     _C = np.array([[p1["x"], p1["y"], 1.0], [p2["x"], p2["y"], 1.0], [p3["x"], p3["y"], 1.0]])
 
     A, B, C = _determinant(_A), _determinant(_B), _determinant(_C)
-    nv = [A, B, C]
+    nv = np.array([A, B, C])
+    norm = np.linalg.norm(nv)
+    nv = Vector(nv / norm)
 
     return nv
 

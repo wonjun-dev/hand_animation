@@ -72,9 +72,49 @@ def img_inference(file_list, static_image_mode=True, max_num_hands=2, min_detect
             cv2.imwrite("source/output/imgs/" + str(idx) + ".png", cv2.flip(annotated_image, 1))
 
 
-def video_inference():
+def video_inference(input_name, output_name):
     # For video input
-    pass
+    input_path = "source/input/videos"
+    output_path = "source/output/videos"
+
+    os.makedirs(output_path, exist_ok=True)
+    cap = cv2.VideoCapture(os.path.join(input_path, input_name))
+
+    fourcc = cv2.VideoWriter_fourcc(*"DIVX")
+    out = cv2.VideoWriter(os.path.join(output_path, output_name), fourcc, 30, (640, 480))
+
+    with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
+        frame = 1
+        frame_coords = {}
+        while cap.isOpened():
+            success, image = cap.read()
+            if not success:
+                print("Ignoring empty camera frame.")
+                # If loading a video, use 'break' instead of 'continue'.
+                continue
+            image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+            # To improve performance, optionally mark the image as not writeable to
+            # pass by reference.
+            image.flags.writeable = False
+            results = hands.process(image)
+
+            # Draw the hand annotations on the image.
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            if results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    frame_coords[frame] = _coords_to_dict(hand_landmarks)
+                    _save_json(frame_coords, name=output_name.split(".")[0])
+                    mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            cv2.imshow("MediaPipe Hands", image)
+            out.write(image)
+            if cv2.waitKey(5) & 0xFF == 27:
+                break
+            frame += 1
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 
 
 def webcam_inference(output_name="video.avi"):
@@ -124,3 +164,4 @@ def webcam_inference(output_name="video.avi"):
 if __name__ == "__main__":
     # img_inference(file_list)
     webcam_inference()
+    # video_inference("handroll.mkv", "handroll_kinect.mkv")

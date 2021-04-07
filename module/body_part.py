@@ -25,16 +25,17 @@ class Hand:
             [17, 18],
             [18, 19],
             [19, 20],
-            # [21, 0],
         ]
 
         self.init_pose = init_pose
-        self.init_normal = 0
+        self.init_normal = None
 
         self.prev_pose = init_pose
         self.prev_normal = self.init_normal
-        self.cur_pose = 0
-        self.cur_normal = 0
+        self.cur_pose = None
+        self.cur_normal = None
+
+        self.rig = None
 
     def gen_palm_vertexes(self):
         pass

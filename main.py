@@ -3,6 +3,7 @@ import sys
 import imp
 import json
 import bpy
+import mathutils
 import numpy as np
 
 
@@ -18,9 +19,13 @@ if not dir in sys.path:
 
 # 커스텀 모듈
 from module import body_part
+from module import palm_normal
+from module import calc_quaternion
 
 # 커스텀 모듈 편집후 자동 리로드
 imp.reload(body_part)
+imp.reload(palm_normal)
+imp.reload(calc_quaternion)
 
 
 def read_json(path):
@@ -29,7 +34,7 @@ def read_json(path):
     return coords
 
 
-def initialzie(init_pose):
+def initialize(init_pose):
     """
     Initialzie Hand rig in .blend file.
     (1. Generate rig. 2. Parenting rig. 3. Generate palm plane, 4. Copy roll constraint of palm plane and lower arm.)
@@ -61,13 +66,22 @@ def initialzie(init_pose):
         bone.head = [head_coord["x"], head_coord["y"], head_coord["z"]]
         bone.tail = [tail_coord["x"], tail_coord["y"], tail_coord["z"]]
 
-    bpy.ops.object.mode_set(mode="OBJECT")
+    # make lower arm
+    head_idx, tail_idx = 21, 0
+    bone = amt.edit_bones.new(f"{head_idx}_{tail_idx}")
+    tail_coord = hand_model.init_pose[str(tail_idx)]
+
+    bone.head = [tail_coord["x"], tail_coord["y"] + 1, tail_coord["z"] + 0.1]
+    bone.tail = [tail_coord["x"], tail_coord["y"], tail_coord["z"]]
 
     _parenting(amt)
+    hand_model.rig = rig
+
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+    print(_palm_normal(init_pose))
 
     return hand_model
-    # amt.edit_bones["0_1"].parent = amt.edit_bones["0_5"]
-    # bpy.ops.object.mode_set(mode="OBJECT")
 
 
 def _parenting(amt):
@@ -78,11 +92,11 @@ def _parenting(amt):
         relation: (list of tuple)
     """
     parent_relation = [
-        ("3_4", "2_3", "1_2", "0_1"),
-        ("7_8", "6_7", "5_6", "0_5"),
-        ("11_12", "10_11", "9_10", "0_9"),
-        ("15_16", "14_15", "13_14", "0_13"),
-        ("19_20", "18_19", "17_18", "0_17"),
+        ("3_4", "2_3", "1_2", "0_1", "21_0"),
+        ("7_8", "6_7", "5_6", "0_5", "21_0"),
+        ("11_12", "10_11", "9_10", "0_9", "21_0"),
+        ("15_16", "14_15", "13_14", "0_13", "21_0"),
+        ("19_20", "18_19", "17_18", "0_17", "21_0"),
     ]
 
     bpy.ops.object.mode_set(mode="EDIT")
@@ -95,19 +109,59 @@ def _parenting(amt):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def move_hand(coords):
-    hand_model
+def _frame_quaternion(prev_normal, cur_normal):
+    """
+    Calculate frame-wise quaternion of palm normal vector.
+    """
+    q = calc_quaternion.cal_quaternion2(prev_normal, cur_normal)
+    return q
+
+
+def apply_animation(coords):
     pass
+
+
+def _palm_normal(coords):
+    return palm_normal.normal_vector(coords)
+
+
+##########################################################################################
 
 
 def main():
     path = os.path.join(json_path, json_name)
     frame_wise_coords = read_json(path)
     init_pose = frame_wise_coords["1"]
-    hand_model = initialzie(init_pose)
+    hand_model = initialize(init_pose)
+    # del frame_wise_coords["1"]
 
-    # for frame, coords in frame_wise_coords.items():
-    #     move_hand(coords)
+    bpy.ops.object.mode_set(mode="POSE")
+    bones = hand_model.rig.pose.bones
+    lower_arm = bones["21_0"]
+
+    normals = []
+    for frame, coords in frame_wise_coords.items():
+        palm_normal = _palm_normal(coords)
+        print(palm_normal)
+        normals.append(palm_normal)
+
+        if frame == "1":
+            continue
+
+        else:
+            assert len(normals) == 2
+            prev_normal = normals[0]
+            cur_normal = normals[1]
+            quaterion = _frame_quaternion(prev_normal, cur_normal)
+            print(quaterion)
+            del normals[0]  # remove prev_normal
+
+            lower_arm.rotation_quaternion[0] = quaterion[0]
+            lower_arm.rotation_quaternion[1] = quaterion[1]
+            lower_arm.rotation_quaternion[2] = -quaterion[2]
+            lower_arm.rotation_quaternion[3] = -quaterion[3]
+
+            lower_arm.keyframe_insert("rotation_quaternion", frame=int(frame))
 
 
 if __name__ == "__main__":

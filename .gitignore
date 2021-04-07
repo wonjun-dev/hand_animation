@@ -131,3 +131,7 @@ dmypy.json
 # Data
 source/
 .vscode/
+
+# Blender
+*.blend
+*.blend*
