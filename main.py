@@ -9,7 +9,7 @@ import numpy as np
 
 os.chdir("/home/wonjun/Blender/blender-2.91.2-linux64/projects/hand_animation")
 json_path = "source/output/json"
-json_name = "video.json"
+json_name = "video_2.json"
 
 # 커스텀 모듈 import 하기 위한 path 추가
 dir = os.path.dirname(bpy.data.filepath)
@@ -117,10 +117,6 @@ def _frame_quaternion(prev_normal, cur_normal):
     return q
 
 
-def apply_animation(coords):
-    pass
-
-
 def _palm_normal(coords):
     return palm_normal.normal_vector(coords)
 
@@ -133,35 +129,49 @@ def main():
     frame_wise_coords = read_json(path)
     init_pose = frame_wise_coords["1"]
     hand_model = initialize(init_pose)
-    # del frame_wise_coords["1"]
 
     bpy.ops.object.mode_set(mode="POSE")
     bones = hand_model.rig.pose.bones
     lower_arm = bones["21_0"]
 
     normals = []
+    locations = []
+
     for frame, coords in frame_wise_coords.items():
-        palm_normal = _palm_normal(coords)
-        print(palm_normal)
-        normals.append(palm_normal)
+        frame = int(frame)
+        # mw = lower_arm.matrix.copy()
+        # print(mw)
+        # if frame == 1 or frame == 223:
+        if frame % 10 == 1:
+            palm_normal = _palm_normal(coords)
+            # print(palm_normal)
+            print(coords)
+            normals.append(palm_normal)
+            locations.append(coords)
 
-        if frame == "1":
-            continue
+            if frame == 1:
+                # lower_arm.keyframe_insert("location", frame=frame)
+                lower_arm.keyframe_insert("rotation_quaternion", frame=frame)
+                continue
 
-        else:
-            assert len(normals) == 2
-            prev_normal = normals[0]
-            cur_normal = normals[1]
-            quaterion = _frame_quaternion(prev_normal, cur_normal)
-            print(quaterion)
-            del normals[0]  # remove prev_normal
+            else:
+                assert len(normals) == 2
+                prev_normal = normals[0]
+                cur_normal = normals[1]
+                quaterion = _frame_quaternion(prev_normal, cur_normal)
+                print(quaterion)
+                del normals[0]  # remove prev_normal
+                # lower_arm.rotation_quaternion[1] = local_quaternion[1]
+                lower_arm.rotation_quaternion[2] = quaterion[2]
+                # lower_arm.rotation_quaternion[3] = local_quaternion[3]
+                lower_arm.keyframe_insert("rotation_quaternion", frame=int(frame))
 
-            lower_arm.rotation_quaternion[0] = quaterion[0]
-            lower_arm.rotation_quaternion[1] = quaterion[1]
-            lower_arm.rotation_quaternion[2] = -quaterion[2]
-            lower_arm.rotation_quaternion[3] = -quaterion[3]
-
-            lower_arm.keyframe_insert("rotation_quaternion", frame=int(frame))
+                # local_quaternion = mw.inverted() @ mathutils.Vector(quaterion)
+                lower_arm.rotation_quaternion[0] = quaterion[0]
+                # lower_arm.rotation_quaternion[1] = local_quaternion[1]
+                lower_arm.rotation_quaternion[2] = quaterion[2]
+                # lower_arm.rotation_quaternion[3] = local_quaternion[3]
+                lower_arm.keyframe_insert("rotation_quaternion", frame=int(frame))
 
 
 if __name__ == "__main__":
