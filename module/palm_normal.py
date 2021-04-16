@@ -17,7 +17,23 @@ def read_json(path):
     return coords
 
 
-def normal_vector(coords, points=[0, 5, 13]):
+def normal_vector(coords):
+    """
+    Return normal vector of a plane using 2 vector.
+
+    Args:
+        coords: (list) List of 3 3-dim vectors.
+    Return
+        nv: (Vector) Normal vector.
+    """
+    A = coords[1] - coords[0]
+    B = coords[2] - coords[0]
+    nv = Vector(np.cross(A, B))
+    nv.normalize()
+    return nv
+
+
+def normal_vector2(coords, points=[0, 5, 13]):
     """
     Return a normal vector of a plane (Ax+By+Cz+D=0).
 

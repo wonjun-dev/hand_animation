@@ -215,7 +215,7 @@ def main():
         if frame % 1 == 0:
             palm_normal = _palm_normal(coords)
             # palm_normal = _world_to_local(palm_normal, armt)
-            normals.append(palm_normal)
+            normals.append(_world_to_local(palm_normal, armt))
             locations.append(coords)
 
             print("n", normals)
@@ -234,6 +234,7 @@ def main():
                 #     print(np.linalg.norm(prev_normal))
                 #     print(np.linalg.norm(cur_normal))
                 #     print(prev_normal.dot(cur_normal))
+                #     input()
                 world_quaterion = _frame_quaternion(prev_normal, cur_normal)
 
                 # del normals[0]  # remove prev_normal
@@ -242,11 +243,10 @@ def main():
 
                 local_quaternion = _world_quaternion_to_local_quaternion(world_quaterion, armt)
                 # print(local_quaternion)
-                print("asdasdf", world_quaterion, np.linalg.norm(local_quaternion))
 
-                lower_arm.rotation_quaternion[0] = local_quaternion[0]
+                lower_arm.rotation_quaternion[0] = world_quaterion[0]
                 # lower_arm.rotation_quaternion[1] = local_quaternion[1] * 30
-                lower_arm.rotation_quaternion[2] = local_quaternion[2] * 1.1
+                lower_arm.rotation_quaternion[2] = world_quaterion[2] * 1.1
                 # lower_arm.rotation_quaternion[3] = local_quaternion[3] * 30
                 lower_arm.keyframe_insert("rotation_quaternion", frame=int(frame))
 

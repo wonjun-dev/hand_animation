@@ -35,7 +35,7 @@ class Hand:
         self.cur_pose = None
         self.cur_normal = None
 
-        self.rig = None
+        self.armature = None
 
     def gen_palm_vertexes(self):
         pass

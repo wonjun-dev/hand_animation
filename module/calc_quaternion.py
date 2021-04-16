@@ -23,7 +23,10 @@ def cal_quaternion(v1, v2):
 
 
 def cal_quaternion2(v1, v2):
+
     dot_product = v1.dot(v2)
+    if dot_product > 1:
+        dot_product = 1.0
     cross_product = v1.cross(v2)
     angle = acos(dot_product)
     quaternion = Quaternion(cross_product, angle)

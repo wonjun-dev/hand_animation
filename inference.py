@@ -163,5 +163,5 @@ def webcam_inference(output_name="video.avi"):
 
 if __name__ == "__main__":
     # img_inference(file_list)
-    webcam_inference()
+    webcam_inference("video_2.avi")
     # video_inference("handroll.mkv", "handroll_kinect.mkv")
