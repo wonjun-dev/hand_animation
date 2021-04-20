@@ -13,9 +13,11 @@ json_name = "video.json"
 
 # 커스텀 모듈 import 하기 위한 path 추가
 dir = os.path.dirname(bpy.data.filepath)
+print(dir)
+input()
 if not dir in sys.path:
     sys.path.append(dir)
-
+    sys.path.append("/home/wonjun/Blender/blender-2.91.2-linux64/projects/hand_animation")
 
 # 커스텀 모듈
 from module import body_part
@@ -246,7 +248,7 @@ def main():
 
                 lower_arm.rotation_quaternion[0] = world_quaterion[0]
                 # lower_arm.rotation_quaternion[1] = local_quaternion[1] * 30
-                lower_arm.rotation_quaternion[2] = world_quaterion[2] * 1.1
+                lower_arm.rotation_quaternion[2] = world_quaterion[2] * 3
                 # lower_arm.rotation_quaternion[3] = local_quaternion[3] * 30
                 lower_arm.keyframe_insert("rotation_quaternion", frame=int(frame))
 
