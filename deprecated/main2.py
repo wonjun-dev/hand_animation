@@ -150,6 +150,8 @@ def _world_to_local(world_vector, armature, bone_name="21_0"):
     return world_vector_bone_space_loc
 
 
+
+
 # def _world_to_local_quat(world_quaternion, armature, bone_name="21_0"):
 #     bone = armature.pose.bones[bone_name]
 
