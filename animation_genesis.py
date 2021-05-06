@@ -42,6 +42,18 @@ def calc_normal_vector(coords, points=[0, 5, 13]):
     return nv
 
 
+def calc_bone_vector(coords, points):
+    p1, p2 = coords[str(points[0])], coords[str(points[1])]
+    p1 = np.array([p1["x"], p1["y"], p1["z"]])
+    p2 = np.array([p2["x"], p2["y"], p2["z"]])
+
+    bv = p2 - p1
+    norm = np.linalg.norm(bv)
+    bv = mathutils.Vector(bv / norm)
+
+    return bv
+
+
 def calc_quaternion(v1, v2):
     quart_xyz = np.cross(v1, v2)
     quart_w = np.sqrt(v1.dot(v1) * v2.dot(v2)) + v1.dot(v2)
@@ -94,32 +106,63 @@ def main(coords):
     scene = bpy.context.scene
     obj = scene.objects.get("Genesis8Male")
     rForearmTwist = obj.pose.bones["rForearmTwist"]
-    lForearmTwist = obj.pose.bones["lForearmTwist"]
+    rForearmBend = obj.pose.bones["rForearmBend"]
+    rShldrBend = obj.pose.bones["rShldrBend"]
+    # lForearmTwist = obj.pose.bones["lForearmTwist"]
 
     bpy.ops.object.mode_set(mode="POSE")
 
     intp = 5
 
-    for frame, coords in frame_wise_coords.items():
+    for frame, landmarks in frame_wise_coords.items():
         frame = int(frame)
+        print(frame)
+        pose = landmarks["pose"]
+        rhand = landmarks["rhand"]
+        lhand = landmarks["lhand"]
 
         if frame % intp == 1:
-            if frame == 1:
-                init_normal = calc_normal_vector(coords)
-                continue
 
-            else:
-                cur_normal = calc_normal_vector(coords)
-                world_quaternion = calc_quaternion(init_normal, cur_normal)
-                lForearmTwist.rotation_quaternion[0] = world_quaternion[0]
-                lForearmTwist.rotation_quaternion[2] = world_quaternion[2]
-                lForearmTwist.keyframe_insert("rotation_quaternion", frame=frame)
+            if pose:
+                # arm bend
+                if frame == 1:
+                    init_rShldrBend = calc_bone_vector(pose, points=[12, 14])
+                    init_rForearmBend = calc_bone_vector(pose, points=[14, 16])
+
+                else:
+                    cur_rShldrBend = calc_bone_vector(pose, points=[12, 14])
+                    cur_rForearmBend = calc_bone_vector(pose, points=[14, 16])
+                    rShldrBend_quaternion = calc_quaternion(init_rShldrBend, cur_rShldrBend)
+                    rForearmBend_quaternion = calc_quaternion(init_rForearmBend, cur_rForearmBend)
+
+                    rShldrBend.rotation_quaternion[0] = rShldrBend_quaternion[0]
+                    rShldrBend.rotation_quaternion[1] = rShldrBend_quaternion[1]
+                    rShldrBend.rotation_quaternion[3] = rShldrBend_quaternion[3]
+                    rShldrBend.keyframe_insert("rotation_quaternion", frame=frame)
+
+                    rForearmBend.rotation_quaternion[0] = rForearmBend_quaternion[0]
+                    rForearmBend.rotation_quaternion[1] = rForearmBend_quaternion[1]
+                    rForearmBend.keyframe_insert("rotation_quaternion", frame=frame)
+
+            if rhand:
+                # arm twist
+                if frame == 1:
+                    init_normal = calc_normal_vector(rhand)
+
+                else:
+                    cur_normal = calc_normal_vector(rhand)
+                    world_quaternion = calc_quaternion(init_normal, cur_normal)
+                    rForearmTwist.rotation_quaternion[0] = world_quaternion[0]
+                    rForearmTwist.rotation_quaternion[2] = world_quaternion[2]
+                    rForearmTwist.keyframe_insert("rotation_quaternion", frame=frame)
+            if lhand:
+                pass
 
 
 if __name__ == "__main__":
     os.chdir("/home/wonjun/Blender/blender-2.91.2-linux64/projects/hand_animation")
-    json_path = "source/output/json"
-    json_name = "video.json"
+    json_path = "data/output/json"
+    json_name = "wonjun.json"
 
     path = os.path.join(json_path, json_name)
     frame_wise_coords = read_json(path)
